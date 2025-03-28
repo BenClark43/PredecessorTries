@@ -49,27 +49,22 @@ fn main() {
     for value in (1..50).step_by(5) {
         test.insert(value, value);
     }
-    test.insert(2147483647, 2147483647);
-    println!("Value: {}, Predecessor value: {}", 2147483646, test.predecessor(&2147483646).unwrap() );
-    println!("Value: {}, Predecessor value: {}", 77, test.predecessor(&77).unwrap() );
+    for value in (2147483600..2147483647).step_by(5) {
+        test.insert(value, value);
+    }
 
-
-    //for value in &random_values {
-    //    test.insert(*value, *value);
-    //}
-
-    //test.hashmap_contents();
-    /*
-
-       duration = start.elapsed();
-       println!("Time taken: {:?}", duration);
-       for value in (1..65535) {
-           test.predecessor(&value);
-       }
-
-       duration = start.elapsed();
-       println!("Time taken: {:?}", duration);
-       save_results();
-
-    */
+    for value in (1..50).step_by(1) {
+        println!(
+            "Value: {}, Predecessor value: {}",
+            value,
+            test.predecessor(&value).unwrap()
+        );
+    }
+    for value in (2147483599..2147483647).step_by(1) {
+        println!(
+            "Value: {}, Predecessor value: {}",
+            value,
+            test.predecessor(&value).unwrap()
+        );
+    }
 }

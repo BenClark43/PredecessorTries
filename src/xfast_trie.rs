@@ -1,7 +1,7 @@
+use rand::distr::uniform::SampleBorrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use rand::distr::uniform::SampleBorrow;
 
 const MAX_KEY_SIZE: usize = 31;
 const MAX_LEVELS: i32 = 31;
@@ -112,9 +112,12 @@ where
         //Fix internal nodes pointers
         let mut curr_size: usize = self.longest_prefix_search(&key);
         for prefix_length in (0..curr_size) {
-            let temp = (key >> (MAX_KEY_SIZE - prefix_length -1));
-           // println!("currsize {} : hashKey {}", prefix_length, temp);
-            let node_ref = self.hashmaps[prefix_length].get(&(key >> (MAX_KEY_SIZE - prefix_length -1))).unwrap().clone();
+            let temp = (key >> (MAX_KEY_SIZE - prefix_length - 1));
+            // println!("currsize {} : hashKey {}", prefix_length, temp);
+            let node_ref = self.hashmaps[prefix_length]
+                .get(&(key >> (MAX_KEY_SIZE - prefix_length - 1)))
+                .unwrap()
+                .clone();
             let mut node = node_ref.borrow_mut();
             let left_ref = node.get_left().unwrap();
             let right_ref = node.get_right().unwrap();
@@ -138,7 +141,7 @@ where
             0 => {
                 let first_node: Rc<RefCell<XFastNode<V>>> = Rc::new(RefCell::new(XFastNode::new()));
                 self.hashmaps[0].insert((key >> (MAX_KEY_SIZE - 1)) & 1, Rc::clone(&first_node));
-                if key & 1 > 0 {
+                if (key >> MAX_KEY_SIZE) > 0 {
                     self.root.set_right(Rc::clone(&first_node));
                 } else {
                     self.root.set_left(Rc::clone(&first_node));
@@ -258,14 +261,13 @@ where
                 }
             };
             if pred_node.borrow().key.as_ref().unwrap() < key {
-                let temp =  pred_node.borrow().key;
+                let temp = pred_node.borrow().key;
                 return temp;
             } else {
                 let next_node = pred_node.borrow().get_left().unwrap();
                 return next_node.borrow().key;
             }
         }
-
     }
 
     // For Debugging
