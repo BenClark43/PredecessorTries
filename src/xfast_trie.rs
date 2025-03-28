@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use rand::distr::uniform::SampleBorrow;
 
 const MAX_KEY_SIZE: usize = 31;
 const MAX_LEVELS: i32 = 31;
@@ -110,39 +111,26 @@ where
 
         //Fix internal nodes pointers
         let mut curr_size: usize = self.longest_prefix_search(&key);
-        for prefix_length in (1..curr_size) {
-            let temp = (key >> (MAX_KEY_SIZE - prefix_length));
-            let node_ref = self.hashmaps[prefix_length].get(&(key >> (MAX_KEY_SIZE - prefix_length))).unwrap().clone();
+        for prefix_length in (0..curr_size) {
+            let temp = (key >> (MAX_KEY_SIZE - prefix_length -1));
+           // println!("currsize {} : hashKey {}", prefix_length, temp);
+            let node_ref = self.hashmaps[prefix_length].get(&(key >> (MAX_KEY_SIZE - prefix_length -1))).unwrap().clone();
             let mut node = node_ref.borrow_mut();
             let left_ref = node.get_left().unwrap();
             let right_ref = node.get_right().unwrap();
 
-
-            {
-                let left = Rc::clone(left_ref);
-                if left.is_leaf() && key < left.key.as_ref().unwrap().clone() {
-                    drop(left);
-                    node.set_left(Rc::clone(&leaf_pointer));
-                }
-            }
-            /*
             {
                 let left = left_ref.borrow();
                 if left.is_leaf() && key < left.key.as_ref().unwrap().clone() {
-                    drop(left);
                     node.set_left(Rc::clone(&leaf_pointer));
                 }
             }
             {
                 let right = right_ref.borrow();
                 if right.is_leaf() && key > right.key.as_ref().unwrap().clone() {
-                    drop(right);
                     node.set_right(Rc::clone(&leaf_pointer));
                 }
             }
-            drop(node);
-
-             */
         }
 
         // Find the first node
@@ -191,9 +179,6 @@ where
             let mut next_node: Rc<RefCell<XFastNode<V>>> = Rc::new(RefCell::new(XFastNode::new()));
 
             let mut curr_node_ref = curr_node.borrow_mut();
-            if curr_size == MAX_KEY_SIZE - 1 {
-                next_node = leaf_pointer.clone();
-            }
             if (key & (1 << (MAX_KEY_SIZE - curr_size))) != 0 {
                 if curr_node_ref.get_left().is_some() {
                     curr_node_ref.set_right(Rc::clone(&next_node));
@@ -237,7 +222,6 @@ where
         self.hashmaps[MAX_KEY_SIZE - 1].contains_key(key)
     }
 
-    // WIP
     pub fn predecessor(&mut self, key: &u32) -> Option<u32> {
         let mut largest_prefix: usize = self.longest_prefix_search(&key);
         let curr_node: Rc<RefCell<XFastNode<V>>>;
@@ -262,6 +246,7 @@ where
             //check which child node we have
             match self.hashmaps[largest_prefix]
                 .get(&((key >> (MAX_KEY_SIZE - largest_prefix)) << 1))
+                // Check if we have a left child ^^^
             {
                 //node has left child
                 Some(_) => {
@@ -273,7 +258,8 @@ where
                 }
             };
             if pred_node.borrow().key.as_ref().unwrap() < key {
-                return pred_node.borrow().key;
+                let temp =  pred_node.borrow().key;
+                return temp;
             } else {
                 let next_node = pred_node.borrow().get_left().unwrap();
                 return next_node.borrow().key;
@@ -293,7 +279,7 @@ where
     }
 
     // This needs to be modified to use leftmost bits instead of rightmost. DONE
-    fn longest_prefix_search(&mut self, key: &u32) -> usize {
+    pub fn longest_prefix_search(&mut self, key: &u32) -> usize {
         let mut low = 0;
         let mut high = MAX_KEY_SIZE;
         let mut largest_prefix: usize = 0;

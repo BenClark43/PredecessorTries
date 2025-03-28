@@ -46,17 +46,19 @@ fn main() {
     //let mut duration = start.elapsed();
 
     let mut test: XFastTrie<u32> = XFastTrie::new();
-    // test.insert(200, 200);
-
-    for value in 1..4 {
+    for value in (1..50).step_by(5) {
         test.insert(value, value);
     }
+    test.insert(2147483647, 2147483647);
+    println!("Value: {}, Predecessor value: {}", 2147483646, test.predecessor(&2147483646).unwrap() );
+    println!("Value: {}, Predecessor value: {}", 77, test.predecessor(&77).unwrap() );
+
 
     //for value in &random_values {
     //    test.insert(*value, *value);
     //}
 
-    test.hashmap_contents();
+    //test.hashmap_contents();
     /*
 
        duration = start.elapsed();
