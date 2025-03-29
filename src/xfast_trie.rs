@@ -2,9 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-const MAX_KEY_SIZE: usize = 31;
-
-// We use Rc<RefCell<>> because nodes are mutable and stored both in the tree and in the hashmaps
+const MAX_KEY_SIZE: usize = 32;
 
 #[derive(Debug)]
 struct XFastNode<V>
@@ -137,7 +135,7 @@ where
             0 => {
                 let first_node: Rc<RefCell<XFastNode<V>>> = Rc::new(RefCell::new(XFastNode::new()));
                 self.hashmaps[0].insert((key >> (MAX_KEY_SIZE - 1)) & 1, Rc::clone(&first_node));
-                if (key >> MAX_KEY_SIZE) > 0 {
+                if (key >> MAX_KEY_SIZE -1) > 0 {
                     self.root.set_right(Rc::clone(&first_node));
                 } else {
                     self.root.set_left(Rc::clone(&first_node));

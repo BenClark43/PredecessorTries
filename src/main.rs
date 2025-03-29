@@ -47,13 +47,14 @@ fn create_data(amount: u32, max: u32) -> Vec<u32> {
 
 fn main() {
     // inputs
-    let input_size = 1000000;
-    let universe_size = "2^32";
+    // let input_size = 1073741824;  2^30
+    let input_size = 65536; // Root U
+    let universe_size = 4294967295;
 
     // Setup
     let mut xfast: XFastTrie<u32> = XFastTrie::new();
     let mut btree: BTreeMap<u32, u32> = BTreeMap::new();
-    let input_data1: Vec<u32> = create_data(input_size, 2147483647);
+    let input_data1: Vec<u32> = create_data(input_size, universe_size);
     let input_data2: Vec<u32> = input_data1.clone();
 
     // X-Fast Trie
@@ -63,7 +64,7 @@ fn main() {
     }
     save_results(&[
         "X-Fast Trie",
-        universe_size,
+        &universe_size.to_string(),
         &input_size.to_string(),
         "Insert",
         &start.elapsed().as_millis().to_string(),
@@ -76,7 +77,7 @@ fn main() {
     }
     save_results(&[
         "X-Fast Trie",
-        universe_size,
+        &universe_size.to_string(),
         &input_size.to_string(),
         "Predecessor",
         &start.elapsed().as_millis().to_string(),
@@ -89,7 +90,7 @@ fn main() {
     }
     save_results(&[
         "X-Fast Trie",
-        universe_size,
+        &universe_size.to_string(),
         &input_size.to_string(),
         "Get",
         &start.elapsed().as_millis().to_string(),
@@ -102,7 +103,7 @@ fn main() {
     }
     save_results(&[
         "B Tree",
-        universe_size,
+        &universe_size.to_string(),
         &input_size.to_string(),
         "Insert",
         &start.elapsed().as_millis().to_string(),
@@ -115,10 +116,12 @@ fn main() {
     }
     save_results(&[
         "B Tree",
-        universe_size,
+        &universe_size.to_string(),
         &input_size.to_string(),
         "Get",
         &start.elapsed().as_millis().to_string(),
     ])
     .expect("ERROR");
+
+    println!("END OF PROCESSING");
 }
