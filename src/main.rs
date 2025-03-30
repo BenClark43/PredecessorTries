@@ -9,7 +9,7 @@ use std::path::Path;
 use std::time::Instant;
 use xfast_trie::XFastTrie;
 
-fn save_results(record: &[&str; 5]) -> Result<(), Box<dyn Error>> {
+fn save_results(record: &[&str; 6]) -> Result<(), Box<dyn Error>> {
     let file_exists = Path::new("results.csv").exists();
     let mut file = std::fs::OpenOptions::new()
         .append(true)
@@ -22,7 +22,8 @@ fn save_results(record: &[&str; 5]) -> Result<(), Box<dyn Error>> {
             "Universe Size",
             "Input Size",
             "Operation",
-            "Time",
+            "Time (µs)",
+            "Memory (Bytes)"
         ])?;
     }
     wtr.write_record(record)?;
@@ -35,10 +36,9 @@ fn create_data(amount: u32, max: u32) -> Vec<u32> {
     let mut random_values = HashSet::new();
 
     while random_values.len() < amount as usize {
-        let random_number: u32 = rng.random();
-        if random_number < max {
-            random_values.insert(random_number);
-        }
+        let random_number: f32 = rng.random();
+
+        random_values.insert((1f32 + random_number * (max - 1) as f32) as u32);
     }
     let mut result: Vec<u32> = random_values.into_iter().collect();
     result.sort();
@@ -47,81 +47,56 @@ fn create_data(amount: u32, max: u32) -> Vec<u32> {
 
 fn main() {
     // inputs
-    // let input_size = 1073741824;  2^30
-    let input_size = 65536; // Root U
-    let universe_size = 4294967295;
+    let input_size = 4096;
+    let universe_size = 262144 *2 *2 *2 *2*2*2*2*2;
 
-    // Setup
-    let mut xfast: XFastTrie<u32> = XFastTrie::new();
-    let mut btree: BTreeMap<u32, u32> = BTreeMap::new();
-    let input_data1: Vec<u32> = create_data(input_size, universe_size);
-    let input_data2: Vec<u32> = input_data1.clone();
+    let mut tries: Vec<XFastTrie<u32>> = Vec::with_capacity(10);
+    let mut data: Vec<Vec<u32>> = Vec::with_capacity(10);
 
-    // X-Fast Trie
-    let mut start = Instant::now();
-    for value in input_data1 {
-        xfast.insert(value, value);
+    let mut insert_time = 0;
+    let mut pred_time = 0;
+    let mut memory = 0;
+
+    for _ in 0..10 {
+        tries.push(XFastTrie::new());
+        data.push(create_data(input_size, universe_size));
     }
+    for index in 0..10 {
+        let input_data = data.get_mut(index).unwrap();
+        let mut xfast = tries.get_mut(index).unwrap();
+        let mut start = Instant::now();
+        for value in input_data {
+            xfast.insert(*value, *value);
+        }
+        insert_time += start.elapsed().as_micros();
+        start = Instant::now();
+        for value in 1..universe_size {
+            xfast.predecessor(&value);
+        }
+        pred_time += start.elapsed().as_micros() * 1000 / universe_size as u128;
+        memory += tries.get(0).unwrap().total_memory_usage();
+    }
+    insert_time = insert_time / 10;
+    pred_time = pred_time / 10;
+    memory = memory / 10;
+
     save_results(&[
         "X-Fast Trie",
         &universe_size.to_string(),
         &input_size.to_string(),
         "Insert",
-        &start.elapsed().as_millis().to_string(),
-    ])
-    .expect("ERROR");
+        &insert_time.to_string(),
+        &memory.to_string(),
+    ]).expect("ERROR");
 
-    start = Instant::now();
-    for value in 1..input_size {
-        xfast.predecessor(&value);
-    }
     save_results(&[
         "X-Fast Trie",
         &universe_size.to_string(),
         &input_size.to_string(),
-        "Predecessor",
-        &start.elapsed().as_millis().to_string(),
-    ])
-    .expect("ERROR");
-
-    start = Instant::now();
-    for value in 1..input_size {
-        xfast.get(&value);
-    }
-    save_results(&[
-        "X-Fast Trie",
-        &universe_size.to_string(),
-        &input_size.to_string(),
-        "Get",
-        &start.elapsed().as_millis().to_string(),
-    ])
-    .expect("ERROR");
-
-    start = Instant::now();
-    for value in input_data2 {
-        btree.insert(value, value);
-    }
-    save_results(&[
-        "B Tree",
-        &universe_size.to_string(),
-        &input_size.to_string(),
-        "Insert",
-        &start.elapsed().as_millis().to_string(),
-    ])
-    .expect("ERROR");
-
-    start = Instant::now();
-    for value in 1..input_size {
-        btree.get(&value);
-    }
-    save_results(&[
-        "B Tree",
-        &universe_size.to_string(),
-        &input_size.to_string(),
-        "Get",
-        &start.elapsed().as_millis().to_string(),
-    ])
-    .expect("ERROR");
+        "Predecessor (1000)",
+        &pred_time.to_string(),
+        &memory.to_string(),
+    ]).expect("ERROR");
 
     println!("END OF PROCESSING");
 }

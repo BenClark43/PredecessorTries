@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::mem;
 use std::rc::Rc;
 
 const MAX_KEY_SIZE: usize = 32;
@@ -269,7 +270,7 @@ where
         let mut largest_prefix: usize = 0;
 
         while low <= high && high > 0 {
-            let prefix_size = low + (high - low) / 2;
+            let prefix_size = low + (high - low + 1) / 2;
 
             if self.hashmaps[prefix_size - 1].contains_key(&(key >> (MAX_KEY_SIZE - prefix_size))) {
                 largest_prefix = prefix_size;
@@ -281,4 +282,19 @@ where
 
         largest_prefix
     }
+
+    pub fn total_memory_usage(&self) -> usize {
+
+        let mut total_size = mem::size_of::<XFastTrie<V>>();
+        total_size += mem::size_of::<XFastNode<V>>();
+
+        // Add size of hashmaps
+        for hashmap in &self.hashmaps {
+            total_size += mem::size_of::<HashMap<u32, Rc<RefCell<XFastNode<V>>>>>();
+            total_size += hashmap.len() * (mem::size_of::<u32>() + mem::size_of::<Rc<RefCell<XFastNode<V>>>>() + mem::size_of::<XFastNode<V>>());
+        }
+
+        total_size
+    }
+
 }
